@@ -37,8 +37,8 @@ function App() {
   return (
     <Canvas shadows camera={{ position: [0, 2, 10], fov: 30 }}>
       <color attach="background" args={["#ececec"]} />
-      {/* <CameraController avatarPosition={targetPosition} /> */}
-      <Experience targetPosition={targetPosition} animation={animation} />
+      <CameraController avatarPosition={targetPosition} />
+      <Experience targetPosition={targetPosition} animation={animation} pointsOfInterest={pointsOfInterest} />
     </Canvas>
   );
 }

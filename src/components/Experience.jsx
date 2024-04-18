@@ -4,15 +4,7 @@ import { OrbitControls, Sky, Environment, Sphere } from "@react-three/drei";
 import React from "react";
 import { Avatar } from "./Avatar";
 
-export const Experience = ({ targetPosition, animation }) => {
-  const pointsOfInterest = [
-    [0, 0, 0],
-    [0, 0, -20],
-    [0, 0, -40],
-    [0, 0, -60],
-    [0, 0, -80],
-  ];
-
+export const Experience = ({ targetPosition, animation, pointsOfInterest }) => {
   return (
     <>
       <OrbitControls />

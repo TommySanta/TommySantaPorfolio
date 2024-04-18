@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useFBX, useGLTF, useAnimations } from "@react-three/drei";
+import { useFBX, useGLTF, useAnimations, Effects } from "@react-three/drei";
 import * as THREE from "three";
 import { useControls } from "leva";
 
@@ -31,8 +31,8 @@ export function Avatar({ targetPosition, animation }) {
     // Determina el ángulo hacia el objetivo en el plano horizontal (XZ)
     const angle = Math.atan2(direction.x, direction.z);
   
-    // Aplica la rotación en Y para que el avatar mire hacia el punto objetivo
-    group.current.rotation.y = angle; 
+    // Aplica la rotación en z para que el avatar mire hacia el punto objetivo
+    group.current.rotation.z = angle; 
   
     const distance = currentPos.distanceTo(targetPos);
   
@@ -43,17 +43,13 @@ export function Avatar({ targetPosition, animation }) {
       
       // Determina si el objetivo está detrás
       const isBehind = Math.abs(angle - group.current.rotation.x) > Math.PI / 2;
-      if (isBehind) {
-        // Si el objetivo está detrás, gira el avatar 180 grados en el eje Y
-        group.current.rotation.x += Math.PI;
-      }
+      
     } else if (isMoving) {
       setIsMoving(false);
+      // Cuando se detiene el movimiento, ajusta la rotación del avatar para que mire hacia adelante
+      group.current.rotation.z = angle;
     }
-  
-    // Asegúrate de normalizar la rotación en Y
-    //group.current.rotation.x %= 2 * Math.PI;
-    //group.current.rotation.y %= 2 * Math.PI;
+
   });
 
   useEffect(() => {
@@ -72,6 +68,7 @@ export function Avatar({ targetPosition, animation }) {
   useEffect(() => {
     group.current.position.set(...targetPosition);
   }, [targetPosition]);
+
 
   return (
     <group ref={group} dispose={null}>
