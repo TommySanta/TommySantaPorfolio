@@ -4,7 +4,7 @@ import { useFBX, useGLTF, useAnimations, Effects } from "@react-three/drei";
 import * as THREE from "three";
 import { useControls } from "leva";
 
-export function Avatar({ targetPosition, animation }) {
+export function Avatar({ targetPosition, animation, pointsOfInterest }) {
   const group = useRef();
   const { nodes, materials, animations } = useGLTF("models/6603042075cd33aaccc0c8cf.glb");
   const { camera } = useThree();
@@ -19,10 +19,13 @@ export function Avatar({ targetPosition, animation }) {
 
   // Estado para controlar si el avatar está en movimiento
   const [isMoving, setIsMoving] = useState(false);
+  // Estado para almacenar la posición anterior del avatar
+  const [previousPosition, setPreviousPosition] = useState(null);
+   // Estado para almacenar la posición actual del avatar
+   const [currentPosition, setCurrentPosition] = useState(null);
 
-  useFrame(() => {
-
-    // Lógica para mover el avatar hacia la posición objetivo
+   useFrame(() => {
+    // Lógica para mover el avatar hacia el siguiente punto de interés
     if (!group.current || !targetPosition) return;
     const currentPos = new THREE.Vector3().setFromMatrixPosition(group.current.matrixWorld);
     const targetPos = new THREE.Vector3(...targetPosition);
@@ -38,6 +41,10 @@ export function Avatar({ targetPosition, animation }) {
   
     if (distance > 0.1) {
       setIsMoving(true);
+      // Almacena la posición anterior justo antes de comenzar a moverse, si no estaba moviéndose antes
+      if (!isMoving) {
+        setPreviousPosition([...currentPos.toArray()]);
+      }
       const step = currentPos.lerp(targetPos, 0.023); // Ajusta la velocidad según sea necesario
       group.current.position.copy(step);
       
@@ -46,28 +53,55 @@ export function Avatar({ targetPosition, animation }) {
       
     } else if (isMoving) {
       setIsMoving(false);
-      // Cuando se detiene el movimiento, ajusta la rotación del avatar para que mire hacia adelante
-      group.current.rotation.z = angle;
+      // Actualiza la posición actual del avatar solo cuando se detiene en un punto
+      setCurrentPosition([...currentPos.toArray()]);
+    } else if (!isMoving) {
+      setIsMoving(false);
+      // Calcula el ángulo opuesto para que el avatar mire hacia adelante cuando se detiene
+      if (previousPosition && currentPosition && previousPosition[2] > currentPosition[2]) {
+        const angle = Math.atan2(currentPosition[0] - previousPosition[0], currentPosition[2] - previousPosition[2]);
+        const oppositeAngle = angle + Math.PI;
+        group.current.rotation.z = oppositeAngle;
+      }
     }
-
   });
+ 
+  useEffect(() => {
+    const currentAction = isMoving ? "Walk" : "Standing";
+    const previousAction = isMoving ? "Standing" : "Walk";
+
+    actions[currentAction]?.reset().fadeIn(0.25).play();
+    actions[previousAction]?.fadeOut(0.25);
+
+    return () => {
+      actions[currentAction]?.fadeOut(0.25);
+    };
+  }, [isMoving, actions]);
 
   useEffect(() => {
-  const currentAction = isMoving ? "Walk" : "Standing";
-  const previousAction = isMoving ? "Standing" : "Walk";
-
-  actions[currentAction]?.reset().fadeIn(0.25).play();
-  actions[previousAction]?.fadeOut(0.25);
-
-  return () => {
-    actions[currentAction]?.fadeOut(0.25);
-  };
-}, [isMoving, actions]);
-
-
-  useEffect(() => {
+    // Cuando cambia el punto de interés, actualiza la posición del avatar y reinicia la animación
     group.current.position.set(...targetPosition);
+    setIsMoving(true); // Comienza a moverse hacia el nuevo punto
   }, [targetPosition]);
+
+  useEffect(() => {
+    // Almacena la posición anterior justo antes de moverse nuevamente, si estaba moviéndose antes
+    if (isMoving) {
+      if (currentPosition !== null) 
+      setPreviousPosition([...currentPosition]);
+    }
+  }, [isMoving]);
+
+  useEffect(() => {
+    
+    console.log("Posición anterior del avatar:", previousPosition);
+  }, [previousPosition]);
+
+  useEffect(() => {
+    
+    console.log("Posición actual del avatar:", currentPosition);
+  }, [currentPosition]);
+
 
 
   return (

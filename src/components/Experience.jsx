@@ -17,7 +17,7 @@ export const Experience = ({ targetPosition, animation, pointsOfInterest }) => {
       {pointsOfInterest.map((pos, index) => (
         <Sphere key={index} args={[0.5, 32, 32]} position={pos} material-color="lightblue" />
       ))}
-      <Avatar targetPosition={targetPosition} animation={animation} />
+      <Avatar targetPosition={targetPosition} animation={animation} pointsOfInterest={pointsOfInterest}/>
     </>
   );
 };
