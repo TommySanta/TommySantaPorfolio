@@ -9,7 +9,7 @@ export function Avatar({ targetPosition, animation, pointsOfInterest }) {
   const { nodes, materials, animations } = useGLTF("models/6603042075cd33aaccc0c8cf.glb");
   const { camera } = useThree();
 
-  const { animations: standingAnimation } = useFBX("animations/Standing Idle.fbx");
+  const { animations: standingAnimation } = useFBX("animations/Standing.fbx");
   const { animations: walkAnimation} = useFBX("animations/Walking.fbx");
   
   standingAnimation[0].name = "Standing";
@@ -30,6 +30,7 @@ export function Avatar({ targetPosition, animation, pointsOfInterest }) {
     const currentPos = new THREE.Vector3().setFromMatrixPosition(group.current.matrixWorld);
     const targetPos = new THREE.Vector3(...targetPosition);
     const direction = new THREE.Vector3().subVectors(targetPos, currentPos).normalize();
+    let clon = currentPos;
   
     // Determina el ángulo hacia el objetivo en el plano horizontal (XZ)
     const angle = Math.atan2(direction.x, direction.z);
@@ -43,27 +44,41 @@ export function Avatar({ targetPosition, animation, pointsOfInterest }) {
       setIsMoving(true);
       // Almacena la posición anterior justo antes de comenzar a moverse, si no estaba moviéndose antes
       if (!isMoving) {
-        setPreviousPosition([...currentPos.toArray()]);
+        clon.z=Math.round(currentPos.toArray()[2]);
+        setPreviousPosition([...clon.toArray()]);
       }
       const step = currentPos.lerp(targetPos, 0.023); // Ajusta la velocidad según sea necesario
       group.current.position.copy(step);
       
-      // Determina si el objetivo está detrás
-      const isBehind = Math.abs(angle - group.current.rotation.x) > Math.PI / 2;
-      
     } else if (isMoving) {
       setIsMoving(false);
       // Actualiza la posición actual del avatar solo cuando se detiene en un punto
-      setCurrentPosition([...currentPos.toArray()]);
+      clon.z=Math.round(currentPos.toArray()[2]);
+      setCurrentPosition([...clon.toArray()]);
     } else if (!isMoving) {
       setIsMoving(false);
       // Calcula el ángulo opuesto para que el avatar mire hacia adelante cuando se detiene
-      if (previousPosition && currentPosition && previousPosition[2] > currentPosition[2]) {
-        const angle = Math.atan2(currentPosition[0] - previousPosition[0], currentPosition[2] - previousPosition[2]);
-        const oppositeAngle = angle + Math.PI;
-        group.current.rotation.z = oppositeAngle;
+      if (previousPosition && currentPosition || !previousPosition) {
+        if (!previousPosition){
+          var clonPos = [0, 0, 0];
+          const angle = Math.atan2(clonPos[0] - clonPos[0], clonPos[2] - clonPos[2]);
+          const oppositeAngle = angle + Math.PI;
+          group.current.rotation.z = oppositeAngle*2;
+        }else{
+          const angle = Math.atan2(currentPosition[0] - previousPosition[0], currentPosition[2] - previousPosition[2]);
+          const oppositeAngle = angle + Math.PI;
+        
+          if (previousPosition[2] > currentPosition[2]) {
+            group.current.rotation.z = oppositeAngle;
+          } else if (previousPosition[2] == currentPosition[2]) {
+            group.current.rotation.z = oppositeAngle * 2;
+          } 
+        }
+       
       }
+      
     }
+    
   });
  
   useEffect(() => {
@@ -87,18 +102,20 @@ export function Avatar({ targetPosition, animation, pointsOfInterest }) {
   useEffect(() => {
     // Almacena la posición anterior justo antes de moverse nuevamente, si estaba moviéndose antes
     if (isMoving) {
-      if (currentPosition !== null) 
-      setPreviousPosition([...currentPosition]);
+      if (currentPosition !== null){
+        var clon= currentPosition
+        clon[2]= Math.round(clon[2]);
+        setPreviousPosition([...clon]);
+      }
+      
     }
   }, [isMoving]);
 
   useEffect(() => {
-    
     console.log("Posición anterior del avatar:", previousPosition);
   }, [previousPosition]);
 
   useEffect(() => {
-    
     console.log("Posición actual del avatar:", currentPosition);
   }, [currentPosition]);
 
